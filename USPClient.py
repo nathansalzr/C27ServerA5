@@ -1,9 +1,7 @@
-import socket
-import ipaddress
 import re
+import ipaddress
+import socket
 
-
-#UDPServer that serves as the echo server receives messages from the echo client
 
 def valid_port(client_port):
     '''
@@ -50,11 +48,9 @@ def valid_ip(ip_str):
         # Return None to indicate that the input was not a valid IP address.
         return None
 
-def udp_server():
+def udp_client():
     '''
-    Starts UDP server and binds it to the user-specified IP address and port
-    Listens for messages from client, receives messages, processes by converting to uppercase
-    then sends it back
+    Runs the UDP client that sends the message to the server
     '''
 
     #prompts the user for the server IP and port
@@ -72,31 +68,31 @@ def udp_server():
     #validates the inputted port number through valid_port function
     client_port = valid_port(client_port)
 
-    #create and bind a UDP socket
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server_socket.bind((server_ip, client_port))
-    print(f"Server started on {server_ip}:{client_port}")
+    #create the server address tuple
+    server_address = (server_ip, client_port)
 
-    try:
-        while True:
-            data, client_address = server_socket.recvfrom(1024)  # buffer size (bytes)
-            print(f"Received message: {data.decode().strip()}' from {client_address}")
+    #Creates a UDP Socket
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        try:
+            while True:
+                #User input
+                message = input("Enter message to send to server (or 'exit' to quit): ")
 
-            #Convert message to Uppercase
-            response_message = data.decode().upper()
+                #if user inputs exit -> client will end
+                if message.lower() == 'exit':
+                    print("Exiting client...")
+                    break
 
-            #Relay the response back to client in uppercase
-            server_socket.sendto(response_message.encode(), client_address)
-            print(f"Sent reponse to {client_address}: '{response_message}'")
+                #sends data to the server
+                print(f"Sending message: {message}")
+                sock.sendto(message.encode(), server_address)
 
-    #Execeptions for errors
-    except socket.error as e:
-        print(f"Socket error: {e}")
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        server_socket.close()
-        print("Server socket closed.")
+                #Server response
+                data, _ = sock.recvfrom(1024) #buffer size (bytes)
+                print(f"Received reply from server: {data.decode()}")
+
+        except Exception as e:
+            print(f"An error occurred> {e}")
 
 if __name__ == "__main__":
-    udp_server()
+    udp_client()
